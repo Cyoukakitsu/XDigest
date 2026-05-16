@@ -1,0 +1,7 @@
+backend/cookies.json
+backend/.env
+backend/__pycache__/
+backend/.pytest_cache/
+frontend/node_modules/
+frontend/dist/
+.DS_Store
