@@ -19,7 +19,7 @@ def _get_headers() -> dict:
 
 
 def _model() -> str:
-    return os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.1-8b-instruct:free")
+    return os.getenv("OPENROUTER_MODEL", "openrouter/auto")
 
 
 def _format_tweets(tweets: list[dict]) -> str:
