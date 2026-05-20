@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 load_dotenv()
 
+import twikit_patches  # noqa: F401 — must be imported before twikit is used
 import scraper
 import ai
 
