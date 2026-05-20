@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import useStore from '../store'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -80,7 +82,42 @@ export default function ChatBox() {
                   : 'bg-gray-700 text-gray-200'
               }`}
             >
-              {msg.content || <span className="animate-pulse">▋</span>}
+              {msg.role === 'user' ? (
+                msg.content || <span className="animate-pulse">▋</span>
+              ) : msg.content ? (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    table: (props) => (
+                      <div className="overflow-x-auto my-2">
+                        <table className="w-full border-collapse text-xs" {...props} />
+                      </div>
+                    ),
+                    thead: (props) => <thead className="bg-gray-600" {...props} />,
+                    th: (props) => (
+                      <th className="border border-gray-500 px-2 py-1 text-left text-gray-200 font-semibold" {...props} />
+                    ),
+                    td: (props) => (
+                      <td className="border border-gray-500 px-2 py-1 text-gray-300 align-top" {...props} />
+                    ),
+                    strong: (props) => <strong className="text-white font-semibold" {...props} />,
+                    ul: (props) => <ul className="list-disc list-inside space-y-0.5 my-1" {...props} />,
+                    ol: (props) => <ol className="list-decimal list-inside space-y-0.5 my-1" {...props} />,
+                    li: (props) => <li className="text-gray-300" {...props} />,
+                    p: (props) => <p className="my-1 text-gray-200" {...props} />,
+                    code: ({ inline, ...props }) =>
+                      inline ? (
+                        <code className="bg-gray-600 text-blue-300 px-1 rounded text-xs" {...props} />
+                      ) : (
+                        <code className="block bg-gray-900 text-green-300 p-2 rounded text-xs overflow-x-auto my-1" {...props} />
+                      ),
+                  }}
+                >
+                  {msg.content}
+                </ReactMarkdown>
+              ) : (
+                <span className="animate-pulse">▋</span>
+              )}
             </div>
           </div>
         ))}

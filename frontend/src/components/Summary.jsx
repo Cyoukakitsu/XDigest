@@ -1,3 +1,5 @@
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import useStore from '../store'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -54,8 +56,41 @@ export default function Summary() {
       </div>
 
       {summary && (
-        <div className="bg-gray-800 rounded-xl p-5 text-gray-200 text-sm leading-7 whitespace-pre-wrap">
-          {summary}
+        <div className="bg-gray-800 rounded-xl p-5 text-gray-200 text-sm leading-7 prose prose-invert prose-sm max-w-none">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              table: (props) => (
+                <div className="overflow-x-auto my-3">
+                  <table className="w-full border-collapse text-xs" {...props} />
+                </div>
+              ),
+              thead: (props) => <thead className="bg-gray-700" {...props} />,
+              th: (props) => (
+                <th className="border border-gray-600 px-3 py-2 text-left text-gray-300 font-semibold" {...props} />
+              ),
+              td: (props) => (
+                <td className="border border-gray-600 px-3 py-2 text-gray-300 align-top" {...props} />
+              ),
+              tr: (props) => <tr className="even:bg-gray-750 hover:bg-gray-700/50" {...props} />,
+              h1: (props) => <h1 className="text-white text-base font-bold mt-4 mb-2" {...props} />,
+              h2: (props) => <h2 className="text-white text-sm font-bold mt-3 mb-1.5" {...props} />,
+              h3: (props) => <h3 className="text-gray-200 text-sm font-semibold mt-2 mb-1" {...props} />,
+              strong: (props) => <strong className="text-white font-semibold" {...props} />,
+              ul: (props) => <ul className="list-disc list-inside space-y-1 my-2" {...props} />,
+              ol: (props) => <ol className="list-decimal list-inside space-y-1 my-2" {...props} />,
+              li: (props) => <li className="text-gray-300" {...props} />,
+              p: (props) => <p className="my-1.5 text-gray-200" {...props} />,
+              code: ({ inline, ...props }) =>
+                inline ? (
+                  <code className="bg-gray-700 text-blue-300 px-1 rounded text-xs" {...props} />
+                ) : (
+                  <code className="block bg-gray-900 text-green-300 p-3 rounded text-xs overflow-x-auto my-2" {...props} />
+                ),
+            }}
+          >
+            {summary}
+          </ReactMarkdown>
         </div>
       )}
 
