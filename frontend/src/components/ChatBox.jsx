@@ -8,6 +8,7 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 export default function ChatBox() {
   const {
     tweets,
+    days,
     chatHistory,
     isChatLoading,
     setIsChatLoading,
@@ -38,7 +39,7 @@ export default function ChatBox() {
       const res = await fetch(`${API}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, tweets }),
+        body: JSON.stringify({ messages, tweets, days }),
       })
 
       const reader = res.body.getReader()
@@ -127,7 +128,7 @@ export default function ChatBox() {
       <div className="flex gap-2 p-3 border-t border-gray-700">
         <input
           className="flex-1 bg-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none"
-          placeholder="针对今日发言提问..."
+          placeholder="针对发言提问..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}

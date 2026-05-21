@@ -6,6 +6,7 @@ const useStore = create((set, get) => ({
   tweets: [],
   summary: '',
   chatHistory: [],
+  days: 1,
   isLoading: false,
   isChatLoading: false,
 
@@ -16,7 +17,10 @@ const useStore = create((set, get) => ({
     tweets: [],
     summary: '',
     chatHistory: [],
+    days: 1,
   }),
+
+  setDays: (days) => set({ days }),
 
   setFetchResult: (tweets, summary) => set({ tweets, summary }),
 

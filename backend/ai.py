@@ -22,6 +22,10 @@ def _model() -> str:
     return os.getenv("OPENROUTER_MODEL", "openrouter/auto")
 
 
+def _period_label(days: int) -> str:
+    return {1: "今日", 7: "本周", 30: "本月"}.get(days, f"近{days}天")
+
+
 def _format_tweets(tweets: list[dict]) -> str:
     lines = []
     for t in tweets:
@@ -30,16 +34,19 @@ def _format_tweets(tweets: list[dict]) -> str:
     return "\n\n".join(lines)
 
 
-async def summarize(tweets: list[dict]) -> str:
+async def summarize(tweets: list[dict], days: int = 1) -> str:
+    label = _period_label(days)
     tweets_text = _format_tweets(tweets)
     messages = [
         {
             "role": "user",
             "content": (
-                "请对以下 X 用户今日发言进行结构化总结，包含：\n"
+                f"请对以下 X 用户{label}发言进行结构化总结，包含：\n"
                 "1. 主要话题（3-5个要点）\n"
                 "2. 关键观点\n"
-                "3. 值得关注的内容\n\n"
+                "3. 值得关注的内容\n"
+                "4. 强烈看多/看空的股票：请用 Markdown 表格列出，列为「方向 | 股票名称/代码 | 理由」。"
+                "若发言中未提及任何强烈看多或看空的股票，直接写"没有"即可，不要强行生成。\n\n"
                 f"发言内容：\n{tweets_text}\n\n请用中文回答。"
             ),
         }
@@ -55,11 +62,12 @@ async def summarize(tweets: list[dict]) -> str:
 
 
 async def chat_stream(
-    messages: list[dict], tweets: list[dict]
+    messages: list[dict], tweets: list[dict], days: int = 1
 ) -> AsyncGenerator[str, None]:
+    label = _period_label(days)
     system_prompt = (
         "你是一个帮助分析 X（推特）用户发言的助手。\n\n"
-        f"以下是该用户今日的所有发言：\n\n{_format_tweets(tweets)}\n\n"
+        f"以下是该用户{label}的所有发言：\n\n{_format_tweets(tweets)}\n\n"
         "请基于以上内容回答用户的问题，用中文回答。"
     )
     full_messages = [{"role": "system", "content": system_prompt}] + messages
