@@ -22,28 +22,38 @@ def _load_client() -> Client:
     return client
 
 
-async def fetch_today_tweets(username: str) -> list[dict]:
+async def fetch_tweets(username: str, days: int = 1) -> list[dict]:
     client = _load_client()
     user = await client.get_user_by_screen_name(username)
     if user is None:
         raise ValueError(f"User '{username}' not found")
 
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     tweets = []
 
-    result = await client.get_user_tweets(user.id, "Tweets", count=50)
-    for tweet in result:
-        created_at_str = tweet.created_at
-        tweet_time = datetime.strptime(created_at_str, "%a %b %d %H:%M:%S %z %Y")
-        if tweet_time < cutoff:
+    result = await client.get_user_tweets(user.id, "Tweets", count=100)
+    for _ in range(5):  # max 5 pages (~500 tweets)
+        done = False
+        for tweet in result:
+            tweet_time = datetime.strptime(tweet.created_at, "%a %b %d %H:%M:%S %z %Y")
+            if tweet_time < cutoff:
+                done = True
+                break
+            tweets.append(
+                {
+                    "id": tweet.id,
+                    "text": tweet.text,
+                    "created_at": tweet.created_at,
+                    "is_retweet": tweet.retweeted_tweet is not None,
+                }
+            )
+        if done:
             break
-        tweets.append(
-            {
-                "id": tweet.id,
-                "text": tweet.text,
-                "created_at": created_at_str,
-                "is_retweet": tweet.retweeted_tweet is not None,
-            }
-        )
+        try:
+            result = await result.next()
+            if not result:
+                break
+        except Exception:
+            break
 
     return tweets

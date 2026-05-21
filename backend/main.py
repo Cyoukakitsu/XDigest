@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -52,6 +52,7 @@ class AddUserRequest(BaseModel):
 class ChatRequest(BaseModel):
     messages: list[dict]
     tweets: list[dict]
+    days: int = 1
 
 
 @app.get("/api/users")
@@ -87,12 +88,16 @@ async def do_login(req: LoginRequest):
         raise HTTPException(status_code=401, detail=str(e))
 
 
+def _period_label(days: int) -> str:
+    return {1: "今日", 7: "本周", 30: "本月"}.get(days, f"近{days}天")
+
+
 @app.post("/api/fetch/{username}")
-async def fetch_user(username: str):
+async def fetch_user(username: str, days: int = Query(1, ge=1, le=30)):
     if not scraper.COOKIES_PATH.exists():
         raise HTTPException(status_code=401, detail="Not logged in to X")
     try:
-        tweets = await scraper.fetch_today_tweets(username)
+        tweets = await scraper.fetch_tweets(username, days=days)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -102,16 +107,16 @@ async def fetch_user(username: str):
         raise HTTPException(status_code=500, detail=msg)
 
     if not tweets:
-        return {"tweets": [], "summary": "该用户今日暂无发言"}
+        return {"tweets": [], "summary": f"该用户{_period_label(days)}暂无发言"}
 
-    summary = await ai.summarize(tweets)
+    summary = await ai.summarize(tweets, days=days)
     return {"tweets": tweets, "summary": summary}
 
 
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
     async def generate():
-        async for chunk in ai.chat_stream(req.messages, req.tweets):
+        async for chunk in ai.chat_stream(req.messages, req.tweets, days=req.days):
             yield f"data: {json.dumps({'content': chunk}, ensure_ascii=False)}\n\n"
         yield "data: [DONE]\n\n"
 

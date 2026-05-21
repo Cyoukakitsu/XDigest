@@ -4,8 +4,14 @@ import useStore from '../store'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
+const PERIODS = [
+  { days: 1, label: '今日' },
+  { days: 7, label: '本周' },
+  { days: 30, label: '本月' },
+]
+
 export default function Summary() {
-  const { selectedUser, tweets, summary, isLoading, setIsLoading, setFetchResult } =
+  const { selectedUser, tweets, summary, days, isLoading, setIsLoading, setFetchResult, setDays } =
     useStore()
 
   const fetchTweets = async () => {
@@ -13,7 +19,7 @@ export default function Summary() {
     setIsLoading(true)
     setFetchResult([], '')
     try {
-      const res = await fetch(`${API}/api/fetch/${selectedUser.username}`, {
+      const res = await fetch(`${API}/api/fetch/${selectedUser.username}?days=${days}`, {
         method: 'POST',
       })
       const data = await res.json()
@@ -29,6 +35,8 @@ export default function Summary() {
     }
   }
 
+  const periodLabel = PERIODS.find((p) => p.days === days)?.label ?? `近${days}天`
+
   if (!selectedUser) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
@@ -43,16 +51,34 @@ export default function Summary() {
         <div>
           <h2 className="text-white text-base font-semibold">@{selectedUser.username}</h2>
           {tweets.length > 0 && (
-            <p className="text-gray-500 text-xs mt-0.5">今日共 {tweets.length} 条发言</p>
+            <p className="text-gray-500 text-xs mt-0.5">{periodLabel}共 {tweets.length} 条发言</p>
           )}
         </div>
-        <button
-          onClick={fetchTweets}
-          disabled={isLoading}
-          className="bg-blue-500 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors"
-        >
-          {isLoading ? '抓取中...' : '抓取今日发言'}
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-lg overflow-hidden border border-gray-600">
+            {PERIODS.map((p) => (
+              <button
+                key={p.days}
+                onClick={() => setDays(p.days)}
+                disabled={isLoading}
+                className={`text-xs px-3 py-1.5 transition-colors disabled:opacity-50 ${
+                  days === p.days
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={fetchTweets}
+            disabled={isLoading}
+            className="bg-blue-500 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors"
+          >
+            {isLoading ? '抓取中...' : `抓取${periodLabel}发言`}
+          </button>
+        </div>
       </div>
 
       {summary && (
@@ -96,7 +122,7 @@ export default function Summary() {
 
       {!summary && !isLoading && (
         <div className="text-gray-600 text-sm text-center pt-10">
-          点击「抓取今日发言」开始
+          点击「抓取{periodLabel}发言」开始
         </div>
       )}
     </div>

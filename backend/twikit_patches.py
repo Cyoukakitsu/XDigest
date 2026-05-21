@@ -4,8 +4,8 @@ Monkey-patches for twikit 2.3.x compatibility with X's current API.
 Two known breakages as of 2026-05:
 1. ClientTransaction.init raises "Couldn't get KEY_BYTE indices" because X
    changed the JS bundle format that twikit parses for transaction headers.
-2. User.__init__ raises KeyError on 'withheld_in_countries' and
-   entities.description.urls for users that omit these optional fields.
+2. User.__init__ raises KeyError on 'withheld_in_countries', 'pinned_tweet_ids_str',
+   and entities.description.urls for users that omit these optional fields.
 """
 import bs4
 from twikit.x_client_transaction import ClientTransaction
@@ -60,6 +60,8 @@ def _patched_user_init(self, client, data):
     legacy['entities'] = entities
     if 'withheld_in_countries' not in legacy:
         legacy['withheld_in_countries'] = []
+    if 'pinned_tweet_ids_str' not in legacy:
+        legacy['pinned_tweet_ids_str'] = ''
     _original_user_init(self, client, data)
 
 
