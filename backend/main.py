@@ -1,12 +1,14 @@
 import json
 import os
 from pathlib import Path
+from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 load_dotenv()
 
@@ -16,7 +18,18 @@ import ai
 import emailer
 import logging
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler = AsyncIOScheduler(timezone="Asia/Shanghai")
+    scheduler.add_job(run_daily_digest, "cron", hour=8, minute=30)
+    scheduler.start()
+    logging.info("Daily digest scheduler started (08:30 Asia/Shanghai)")
+    yield
+    scheduler.shutdown()
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
