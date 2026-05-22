@@ -4,7 +4,7 @@ import useStore from '../store'
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export default function Sidebar({ onLoginClick }) {
-  const { users, setUsers, selectedUser, selectUser } = useStore()
+  const { users, setUsers, selectedUser, selectUser, toggleDigest } = useStore()
   const [input, setInput] = useState('')
   const [error, setError] = useState('')
 
@@ -83,6 +83,20 @@ export default function Sidebar({ onLoginClick }) {
             >
               @{user.username}
             </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleDigest(user.username, !(user.digest ?? true))
+              }}
+              className={`opacity-0 group-hover:opacity-100 text-xs ml-1 transition-colors ${
+                (user.digest ?? true)
+                  ? 'text-blue-400 hover:text-blue-200'
+                  : 'text-gray-600 hover:text-gray-400'
+              }`}
+              title={(user.digest ?? true) ? '已订阅早报，点击取消' : '未订阅早报，点击开启'}
+            >
+              ✉
+            </button>
             <button
               onClick={() => deleteUser(user.username)}
               className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-400 text-xs ml-1"
