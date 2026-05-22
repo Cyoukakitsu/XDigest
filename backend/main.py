@@ -13,6 +13,8 @@ load_dotenv()
 import twikit_patches  # noqa: F401 — must be imported before twikit is used
 import scraper
 import ai
+import emailer
+import logging
 
 app = FastAPI()
 
@@ -139,3 +141,29 @@ async def chat(req: ChatRequest):
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
+
+
+async def run_daily_digest() -> None:
+    users = [u for u in _load_users() if u.get("digest", True)]
+    if not users:
+        return
+
+    if not scraper.COOKIES_PATH.exists():
+        logging.warning("Daily digest skipped: not logged in to X")
+        return
+
+    sections = []
+    for user in users:
+        try:
+            tweets = await scraper.fetch_tweets(user["username"], days=1)
+            summary = await ai.summarize(tweets, days=1) if tweets else None
+            sections.append({
+                "username": user["username"],
+                "summary": summary,
+                "tweet_count": len(tweets),
+            })
+        except Exception as e:
+            logging.error("Digest: failed to fetch %s: %s", user["username"], e)
+
+    if sections:
+        emailer.send_digest(sections)
