@@ -28,3 +28,35 @@ def build_html(sections: list[dict]) -> str:
         parts.append("<hr>")
     parts.append("</body></html>")
     return "\n".join(parts)
+
+
+def send_digest(sections: list[dict], *, smtp_class=None) -> None:
+    if smtp_class is None:
+        smtp_class = smtplib.SMTP_SSL
+
+    gmail_user = os.getenv("GMAIL_USER")
+    app_password = os.getenv("GMAIL_APP_PASSWORD")
+    to_addr = os.getenv("DIGEST_TO")
+
+    if not all([gmail_user, app_password, to_addr]):
+        logger.warning(
+            "Daily digest skipped: GMAIL_USER / GMAIL_APP_PASSWORD / DIGEST_TO not set"
+        )
+        return
+
+    today = date.today().strftime("%Y-%m-%d")
+    html_body = build_html(sections)
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"XDigest 早报 · {today}"
+    msg["From"] = gmail_user
+    msg["To"] = to_addr
+    msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+    try:
+        with smtp_class("smtp.gmail.com", 465) as server:
+            server.login(gmail_user, app_password)
+            server.sendmail(gmail_user, to_addr, msg.as_string())
+        logger.info("Daily digest sent to %s", to_addr)
+    except Exception as e:
+        logger.error("Failed to send daily digest: %s", e)
