@@ -29,7 +29,10 @@ USERS_PATH = Path(__file__).parent / "users.json"
 def _load_users() -> list[dict]:
     if not USERS_PATH.exists():
         return []
-    return json.loads(USERS_PATH.read_text(encoding="utf-8"))
+    users = json.loads(USERS_PATH.read_text(encoding="utf-8"))
+    for u in users:
+        u.setdefault("digest", True)
+    return users
 
 
 def _save_users(users: list[dict]) -> None:
@@ -55,6 +58,10 @@ class ChatRequest(BaseModel):
     days: int = 1
 
 
+class PatchUserRequest(BaseModel):
+    digest: bool
+
+
 @app.get("/api/users")
 def get_users():
     return _load_users()
@@ -75,6 +82,17 @@ def delete_user(username: str):
     users = _load_users()
     _save_users([u for u in users if u["username"] != username])
     return {"ok": True}
+
+
+@app.patch("/api/users/{username}")
+def patch_user(username: str, req: PatchUserRequest):
+    users = _load_users()
+    for user in users:
+        if user["username"] == username:
+            user["digest"] = req.digest
+            _save_users(users)
+            return {"ok": True}
+    raise HTTPException(status_code=404, detail="User not found")
 
 
 @app.post("/api/login")
