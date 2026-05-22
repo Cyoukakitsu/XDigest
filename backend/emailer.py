@@ -1,3 +1,4 @@
+import html
 import logging
 import smtplib
 import os
@@ -18,7 +19,7 @@ def build_html(sections: list[dict]) -> str:
         "<hr>",
     ]
     for s in sections:
-        parts.append(f"<h2>@{s['username']}</h2>")
+        parts.append(f"<h2>@{html.escape(s['username'])}</h2>")
         if s["summary"]:
             parts.append(md_lib.markdown(s["summary"]))
             parts.append(f"<p><small>共 {s['tweet_count']} 条推文</small></p>")
