@@ -61,7 +61,9 @@ const useStore = create((set, get) => ({
           u.username === username ? { ...u, digest } : u
         ),
       }))
-    } catch (_) {}
+    } catch (e) {
+      console.error('toggleDigest failed:', e)
+    }
   },
 }))
 
