@@ -1,20 +1,35 @@
 import json
 import os
 from pathlib import Path
+from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 load_dotenv()
 
 import twikit_patches  # noqa: F401 — must be imported before twikit is used
 import scraper
 import ai
+import emailer
+import logging
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler = AsyncIOScheduler(timezone="Asia/Shanghai")
+    scheduler.add_job(run_daily_digest, "cron", hour=8, minute=30)
+    scheduler.start()
+    logging.info("Daily digest scheduler started (08:30 Asia/Shanghai)")
+    yield
+    scheduler.shutdown()
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,7 +44,10 @@ USERS_PATH = Path(__file__).parent / "users.json"
 def _load_users() -> list[dict]:
     if not USERS_PATH.exists():
         return []
-    return json.loads(USERS_PATH.read_text(encoding="utf-8"))
+    users = json.loads(USERS_PATH.read_text(encoding="utf-8"))
+    for u in users:
+        u.setdefault("digest", True)
+    return users
 
 
 def _save_users(users: list[dict]) -> None:
@@ -55,6 +73,11 @@ class ChatRequest(BaseModel):
     days: int = 1
 
 
+class PatchUserRequest(BaseModel):
+    digest: bool | None = None
+    note: str | None = None
+
+
 @app.get("/api/users")
 def get_users():
     return _load_users()
@@ -75,6 +98,25 @@ def delete_user(username: str):
     users = _load_users()
     _save_users([u for u in users if u["username"] != username])
     return {"ok": True}
+
+
+@app.patch("/api/users/{username}")
+def patch_user(username: str, req: PatchUserRequest):
+    users = _load_users()
+    for user in users:
+        if user["username"] == username:
+            if req.digest is not None:
+                user["digest"] = req.digest
+            if req.note is not None:
+                user["note"] = req.note
+            _save_users(users)
+            return {"ok": True}
+    raise HTTPException(status_code=404, detail="User not found")
+
+
+@app.get("/api/login/status")
+def login_status():
+    return {"logged_in": scraper.COOKIES_PATH.exists()}
 
 
 @app.post("/api/login")
@@ -121,3 +163,29 @@ async def chat(req: ChatRequest):
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
+
+
+async def run_daily_digest() -> None:
+    users = [u for u in _load_users() if u.get("digest", True)]
+    if not users:
+        return
+
+    if not scraper.COOKIES_PATH.exists():
+        logging.warning("Daily digest skipped: not logged in to X")
+        return
+
+    sections = []
+    for user in users:
+        try:
+            tweets = await scraper.fetch_tweets(user["username"], days=1)
+            summary = await ai.summarize(tweets, days=1) if tweets else None
+            sections.append({
+                "username": user["username"],
+                "summary": summary,
+                "tweet_count": len(tweets),
+            })
+        except Exception as e:
+            logging.error("Digest: failed to fetch %s: %s", user["username"], e)
+
+    if sections:
+        emailer.send_digest(sections)

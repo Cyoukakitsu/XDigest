@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
 const useStore = create((set, get) => ({
   users: [],
   selectedUser: null,
@@ -46,6 +48,40 @@ const useStore = create((set, get) => ({
       }
       return { chatHistory: history }
     }),
+
+  updateNote: async (username, note) => {
+    try {
+      await fetch(`${API}/api/users/${username}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note }),
+      })
+      set((state) => ({
+        users: state.users.map((u) =>
+          u.username === username ? { ...u, note } : u
+        ),
+      }))
+    } catch (e) {
+      console.error('updateNote failed:', e)
+    }
+  },
+
+  toggleDigest: async (username, digest) => {
+    try {
+      await fetch(`${API}/api/users/${username}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ digest }),
+      })
+      set((state) => ({
+        users: state.users.map((u) =>
+          u.username === username ? { ...u, digest } : u
+        ),
+      }))
+    } catch (e) {
+      console.error('toggleDigest failed:', e)
+    }
+  },
 }))
 
 export default useStore
