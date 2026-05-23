@@ -74,7 +74,8 @@ class ChatRequest(BaseModel):
 
 
 class PatchUserRequest(BaseModel):
-    digest: bool
+    digest: bool | None = None
+    note: str | None = None
 
 
 @app.get("/api/users")
@@ -104,10 +105,18 @@ def patch_user(username: str, req: PatchUserRequest):
     users = _load_users()
     for user in users:
         if user["username"] == username:
-            user["digest"] = req.digest
+            if req.digest is not None:
+                user["digest"] = req.digest
+            if req.note is not None:
+                user["note"] = req.note
             _save_users(users)
             return {"ok": True}
     raise HTTPException(status_code=404, detail="User not found")
+
+
+@app.get("/api/login/status")
+def login_status():
+    return {"logged_in": scraper.COOKIES_PATH.exists()}
 
 
 @app.post("/api/login")
