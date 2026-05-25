@@ -21,6 +21,7 @@ import logging
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     scheduler = AsyncIOScheduler(timezone="Asia/Shanghai")
     scheduler.add_job(run_daily_digest, "cron", hour=8, minute=30)
     scheduler.start()
@@ -34,7 +35,7 @@ app = FastAPI(lifespan=lifespan)
 _origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in _origins.split(",")],
+    allow_origins=[o.strip() for o in _origins.split(",") if o.strip()],
     allow_methods=["*"],
     allow_headers=["*"],
 )
