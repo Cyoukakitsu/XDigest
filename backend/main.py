@@ -31,14 +31,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=_origins.split(","),
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-USERS_PATH = Path(__file__).parent / "users.json"
+DATA_DIR = Path(os.getenv("DATA_DIR", str(Path(__file__).parent)))
+USERS_PATH = DATA_DIR / "users.json"
 
 
 def _load_users() -> list[dict]:
