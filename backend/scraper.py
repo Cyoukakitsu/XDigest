@@ -1,10 +1,12 @@
 import json
+import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from twikit import Client
 
-COOKIES_PATH = Path(__file__).parent / "cookies.json"
+DATA_DIR = Path(os.getenv("DATA_DIR", str(Path(__file__).parent)))
+COOKIES_PATH = DATA_DIR / "cookies.json"
 
 
 async def login(auth_info_1: str, password: str, auth_info_2: str | None = None) -> None:
