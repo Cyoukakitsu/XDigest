@@ -4,7 +4,7 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -156,6 +156,16 @@ async def fetch_user(username: str, days: int = Query(1, ge=1, le=30)):
 
     summary = await ai.summarize(tweets, days=days)
     return {"tweets": tweets, "summary": summary}
+
+
+@app.post("/api/admin/cookies")
+async def upload_cookies(request: Request):
+    data = await request.json()
+    scraper.COOKIES_PATH.parent.mkdir(parents=True, exist_ok=True)
+    scraper.COOKIES_PATH.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    return {"ok": True, "path": str(scraper.COOKIES_PATH)}
 
 
 @app.post("/api/chat")
