@@ -22,7 +22,7 @@ X（Twitter）上のフォロー対象ユーザーの発言を自動収集し、
 | バックエンド | FastAPI + Python 3.11 |
 | データ収集 | twikit（X 非公式クライアント） |
 | AI | OpenRouter API（デフォルト: `openrouter/auto`） |
-| スケジューラー | APScheduler（asyncio モード） |
+| スケジューラー | macOS launchd（毎朝 08:30 自動実行） |
 | メール送信 | Gmail SMTP（SSL） |
 
 ## 必要環境
@@ -110,7 +110,8 @@ npm run dev
 
 ```
 ├── backend/
-│   ├── main.py              # FastAPI ルート・スケジューラー
+│   ├── main.py              # FastAPI ルート
+│   ├── digest_job.py        # ローカル定時実行用スタンドアロンスクリプト
 │   ├── scraper.py           # X データ収集（twikit）
 │   ├── ai.py                # OpenRouter AI 呼び出し
 │   ├── emailer.py           # ダイジェストメール生成・送信
@@ -121,6 +122,65 @@ npm run dev
         ├── store.js          # Zustand グローバルステート
         └── components/       # React コンポーネント
 ```
+
+## ローカルダイジェスト定時実行（macOS）
+
+毎朝 08:30 に自動でダイジェストメールを送信するには、macOS の launchd を使います。FastAPI サーバーの起動は不要です。
+
+### 手動実行
+
+```bash
+cd backend
+venv/bin/python digest_job.py
+```
+
+### launchd への登録
+
+以下の内容で `~/Library/LaunchAgents/com.xdigest.digest.plist` を作成してください（パスは環境に合わせて変更）。
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.xdigest.digest</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/path/to/x/backend/venv/bin/python</string>
+        <string>/path/to/x/backend/digest_job.py</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/path/to/x/backend</string>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key><integer>8</integer>
+        <key>Minute</key><integer>30</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/Users/your_name/Library/Logs/xdigest.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/your_name/Library/Logs/xdigest.log</string>
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>
+```
+
+登録・確認コマンド：
+
+```bash
+# 登録
+launchctl load ~/Library/LaunchAgents/com.xdigest.digest.plist
+
+# 登録確認
+launchctl list | grep xdigest
+
+# ログ確認
+tail -50 ~/Library/Logs/xdigest.log
+```
+
+> **スリープ時の挙動**：画面オフ（ディスプレイスリープのみ）の場合は 08:30 に正常実行されます。システムスリープ（蓋を閉じるなど）中は実行がスキップされますが、Mac が復帰した直後に補完実行されます。
 
 ## 開発
 
