@@ -39,7 +39,7 @@ export default function Summary() {
 
   if (!selectedUser) {
     return (
-      <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
+      <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
         请从左侧选择一个用户
       </div>
     )
@@ -49,22 +49,22 @@ export default function Summary() {
     <div className="flex-1 overflow-y-auto p-6">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h2 className="text-white text-base font-semibold">@{selectedUser.username}</h2>
+          <h2 className="text-foreground text-base font-semibold">@{selectedUser.username}</h2>
           {tweets.length > 0 && (
-            <p className="text-gray-500 text-xs mt-0.5">{periodLabel}共 {tweets.length} 条发言</p>
+            <p className="text-muted-foreground text-xs mt-0.5">{periodLabel}共 {tweets.length} 条发言</p>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex rounded-lg overflow-hidden border border-gray-600">
+          <div className="flex rounded-lg overflow-hidden border border-border">
             {PERIODS.map((p) => (
               <button
                 key={p.days}
                 onClick={() => setDays(p.days)}
                 disabled={isLoading}
-                className={`text-xs px-3 py-1.5 transition-colors disabled:opacity-50 ${
+                className={`text-xs px-3 py-1.5 transition-colors disabled:opacity-50 cursor-pointer ${
                   days === p.days
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
               >
                 {p.label}
@@ -74,7 +74,7 @@ export default function Summary() {
           <button
             onClick={fetchTweets}
             disabled={isLoading}
-            className="bg-blue-500 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors"
+            className="bg-primary text-primary-foreground text-sm px-4 py-2 rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
           >
             {isLoading ? '抓取中...' : `抓取${periodLabel}发言`}
           </button>
@@ -82,7 +82,7 @@ export default function Summary() {
       </div>
 
       {summary && (
-        <div className="bg-gray-800 rounded-xl p-5 text-gray-200 text-sm leading-7 prose prose-invert prose-sm max-w-none">
+        <div className="bg-card border border-border rounded-xl p-5 text-foreground text-sm leading-7 max-w-none">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
@@ -91,27 +91,27 @@ export default function Summary() {
                   <table className="w-full border-collapse text-xs" {...props} />
                 </div>
               ),
-              thead: (props) => <thead className="bg-gray-700" {...props} />,
+              thead: (props) => <thead className="bg-muted" {...props} />,
               th: (props) => (
-                <th className="border border-gray-600 px-3 py-2 text-left text-gray-300 font-semibold" {...props} />
+                <th className="border border-border px-3 py-2 text-left text-foreground font-semibold" {...props} />
               ),
               td: (props) => (
-                <td className="border border-gray-600 px-3 py-2 text-gray-300 align-top" {...props} />
+                <td className="border border-border px-3 py-2 text-foreground align-top" {...props} />
               ),
-              tr: (props) => <tr className="even:bg-gray-750 hover:bg-gray-700/50" {...props} />,
-              h1: (props) => <h1 className="text-white text-base font-bold mt-4 mb-2" {...props} />,
-              h2: (props) => <h2 className="text-white text-sm font-bold mt-3 mb-1.5" {...props} />,
-              h3: (props) => <h3 className="text-gray-200 text-sm font-semibold mt-2 mb-1" {...props} />,
-              strong: (props) => <strong className="text-white font-semibold" {...props} />,
+              tr: (props) => <tr className="even:bg-muted/30 hover:bg-muted/50 transition-colors" {...props} />,
+              h1: (props) => <h1 className="text-foreground text-base font-bold mt-4 mb-2" {...props} />,
+              h2: (props) => <h2 className="text-foreground text-sm font-bold mt-3 mb-1.5" {...props} />,
+              h3: (props) => <h3 className="text-foreground text-sm font-semibold mt-2 mb-1" {...props} />,
+              strong: (props) => <strong className="text-foreground font-semibold" {...props} />,
               ul: (props) => <ul className="list-disc list-inside space-y-1 my-2" {...props} />,
               ol: (props) => <ol className="list-decimal list-inside space-y-1 my-2" {...props} />,
-              li: (props) => <li className="text-gray-300" {...props} />,
-              p: (props) => <p className="my-1.5 text-gray-200" {...props} />,
+              li: (props) => <li className="text-foreground" {...props} />,
+              p: (props) => <p className="my-1.5 text-foreground" {...props} />,
               code: ({ inline, ...props }) =>
                 inline ? (
-                  <code className="bg-gray-700 text-blue-300 px-1 rounded text-xs" {...props} />
+                  <code className="bg-muted text-primary px-1 rounded text-xs font-mono" {...props} />
                 ) : (
-                  <code className="block bg-gray-900 text-green-300 p-3 rounded text-xs overflow-x-auto my-2" {...props} />
+                  <code className="block bg-muted text-foreground p-3 rounded-lg text-xs font-mono overflow-x-auto my-2" {...props} />
                 ),
             }}
           >
@@ -121,7 +121,7 @@ export default function Summary() {
       )}
 
       {!summary && !isLoading && (
-        <div className="text-gray-600 text-sm text-center pt-10">
+        <div className="text-muted-foreground text-sm text-center pt-10">
           点击「抓取{periodLabel}发言」开始
         </div>
       )}
