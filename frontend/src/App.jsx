@@ -8,7 +8,7 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false)
 
   return (
-    <div className="flex h-screen bg-gray-900 text-white overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar onLoginClick={() => setShowLogin(true)} />
       <main className="flex-1 flex flex-col overflow-hidden">
         <Summary />

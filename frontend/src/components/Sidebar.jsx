@@ -61,15 +61,15 @@ export default function Sidebar({ onLoginClick }) {
   }
 
   return (
-    <aside className="w-60 bg-gray-900 h-screen flex flex-col border-r border-gray-700">
-      <div className="p-4 border-b border-gray-700">
-        <h1 className="text-white text-lg font-bold tracking-tight">XDigest</h1>
+    <aside className="w-60 bg-sidebar h-screen flex flex-col border-r border-sidebar-border">
+      <div className="p-4 border-b border-border">
+        <h1 className="text-sidebar-foreground text-lg font-bold tracking-tight">XDigest</h1>
       </div>
 
-      <div className="p-3 border-b border-gray-700 space-y-2">
-        <div className="flex gap-1">
+      <div className="p-3 border-b border-border space-y-2">
+        <div className="flex gap-1.5">
           <input
-            className="flex-1 bg-gray-700 text-white text-sm rounded px-2 py-1 focus:outline-none"
+            className="flex-1 bg-card border border-border text-foreground text-sm rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground"
             placeholder="添加用户名"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -77,105 +77,118 @@ export default function Sidebar({ onLoginClick }) {
           />
           <button
             onClick={addUser}
-            className="bg-blue-500 text-white text-sm px-2 py-1 rounded hover:bg-blue-600"
+            className="bg-primary text-primary-foreground text-sm px-3 py-1.5 rounded-lg hover:bg-primary/90 cursor-pointer transition-colors"
           >
             +
           </button>
         </div>
-        {error && <p className="text-red-400 text-xs">{error}</p>}
+        {error && <p className="text-destructive text-xs">{error}</p>}
       </div>
 
       <ul className="flex-1 overflow-y-auto p-2 space-y-1">
-        {users.map((user) => (
-          <li
-            key={user.username}
-            className={`px-3 py-2 rounded-lg cursor-pointer group ${
-              selectedUser?.username === user.username
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-300 hover:bg-gray-700'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span
-                onClick={() => selectUser(user)}
-                className="flex-1 text-sm truncate"
-              >
-                @{user.username}
-              </span>
-              <button
-                onClick={(e) => startEdit(user, e)}
-                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-200 text-xs ml-1"
-                title="编辑备注"
-              >
-                ✎
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  toggleDigest(user.username, !(user.digest ?? true))
-                }}
-                className={`text-xs ml-1 transition-colors ${
-                  (user.digest ?? true)
-                    ? 'text-blue-400 hover:text-blue-200'
-                    : 'opacity-0 group-hover:opacity-100 text-gray-500 hover:text-gray-300'
-                }`}
-                title={(user.digest ?? true) ? '已订阅早报，点击取消' : '未订阅早报，点击开启'}
-              >
-                ✉
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); deleteUser(user.username) }}
-                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-400 text-xs ml-1"
-              >
-                ✕
-              </button>
-            </div>
-            {user.note && editingUser !== user.username && (
-              <p className={`text-xs truncate mt-0.5 ${
-                selectedUser?.username === user.username ? 'text-blue-200' : 'text-gray-500'
-              }`}>
-                {user.note}
-              </p>
-            )}
-            {editingUser === user.username && (
-              <div className="flex items-center gap-1 mt-1">
-                <input
-                  autoFocus
-                  value={noteInput}
-                  onChange={(e) => setNoteInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') saveNote(user.username)
-                    if (e.key === 'Escape') setEditingUser(null)
-                  }}
-                  onBlur={() => saveNote(user.username)}
-                  className="flex-1 bg-gray-600 text-white text-xs rounded px-2 py-0.5 focus:outline-none min-w-0"
-                  placeholder="添加备注..."
-                />
-                <button
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => saveNote(user.username)}
-                  className="text-green-400 hover:text-green-200 text-xs flex-shrink-0"
+        {users.map((user) => {
+          const isSelected = selectedUser?.username === user.username
+          return (
+            <li
+              key={user.username}
+              className={`px-3 py-2 rounded-lg cursor-pointer group ${
+                isSelected
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-foreground hover:bg-muted'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  onClick={() => selectUser(user)}
+                  className="flex-1 text-sm truncate"
                 >
-                  ✓
+                  @{user.username}
+                </span>
+                <button
+                  onClick={(e) => startEdit(user, e)}
+                  className={`opacity-0 group-hover:opacity-100 text-xs ml-1 cursor-pointer transition-opacity ${
+                    isSelected
+                      ? 'text-primary-foreground/60 hover:text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="编辑备注"
+                >
+                  ✎
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleDigest(user.username, !(user.digest ?? true))
+                  }}
+                  className={`text-xs ml-1 transition-colors cursor-pointer ${
+                    (user.digest ?? true)
+                      ? isSelected
+                        ? 'text-primary-foreground/80 hover:text-primary-foreground'
+                        : 'text-primary hover:text-primary/70'
+                      : 'opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground'
+                  }`}
+                  title={(user.digest ?? true) ? '已订阅早报，点击取消' : '未订阅早报，点击开启'}
+                >
+                  ✉
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); deleteUser(user.username) }}
+                  className={`opacity-0 group-hover:opacity-100 text-xs ml-1 cursor-pointer transition-opacity ${
+                    isSelected
+                      ? 'text-primary-foreground/60 hover:text-primary-foreground'
+                      : 'text-muted-foreground hover:text-destructive'
+                  }`}
+                >
+                  ✕
                 </button>
               </div>
-            )}
-          </li>
-        ))}
+              {user.note && editingUser !== user.username && (
+                <p className={`text-xs truncate mt-0.5 ${
+                  isSelected ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                }`}>
+                  {user.note}
+                </p>
+              )}
+              {editingUser === user.username && (
+                <div className="flex items-center gap-1 mt-1">
+                  <input
+                    autoFocus
+                    value={noteInput}
+                    onChange={(e) => setNoteInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveNote(user.username)
+                      if (e.key === 'Escape') setEditingUser(null)
+                    }}
+                    onBlur={() => saveNote(user.username)}
+                    className="flex-1 bg-background border border-border text-foreground text-xs rounded-md px-2 py-0.5 focus:outline-none min-w-0 placeholder:text-muted-foreground"
+                    placeholder="添加备注..."
+                  />
+                  <button
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => saveNote(user.username)}
+                    className="text-secondary hover:text-secondary/70 text-xs flex-shrink-0 cursor-pointer"
+                  >
+                    ✓
+                  </button>
+                </div>
+              )}
+            </li>
+          )
+        })}
         {users.length === 0 && (
-          <p className="text-gray-600 text-xs text-center pt-4">暂无追踪用户</p>
+          <p className="text-muted-foreground text-xs text-center pt-4">暂无追踪用户</p>
         )}
       </ul>
 
-      <div className="p-3 border-t border-gray-700">
+      <div className="p-3 border-t border-border">
         <button
           onClick={onLoginClick}
-          className="w-full text-xs py-1 flex items-center justify-center gap-1"
+          className="w-full text-xs py-1 flex items-center justify-center gap-1 cursor-pointer"
         >
           {loggedIn ? (
-            <span className="text-green-400 hover:text-green-300">✓ 已登录 X</span>
+            <span className="text-secondary hover:text-secondary/70 transition-colors">✓ 已登录 X</span>
           ) : (
-            <span className="text-gray-400 hover:text-white">⚙ X 账号登录</span>
+            <span className="text-muted-foreground hover:text-foreground transition-colors">⚙ X 账号登录</span>
           )}
         </button>
       </div>

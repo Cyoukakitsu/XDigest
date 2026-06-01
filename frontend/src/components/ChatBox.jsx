@@ -69,7 +69,7 @@ export default function ChatBox() {
   if (tweets.length === 0) return null
 
   return (
-    <div className="border-t border-gray-700 flex flex-col" style={{ height: '42vh' }}>
+    <div className="border-t border-border flex flex-col" style={{ height: '42vh' }}>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {chatHistory.map((msg, i) => (
           <div
@@ -79,8 +79,8 @@ export default function ChatBox() {
             <div
               className={`max-w-lg px-3 py-2 rounded-xl text-sm leading-relaxed ${
                 msg.role === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 text-gray-200'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card border border-border text-foreground'
               }`}
             >
               {msg.role === 'user' ? (
@@ -94,23 +94,23 @@ export default function ChatBox() {
                         <table className="w-full border-collapse text-xs" {...props} />
                       </div>
                     ),
-                    thead: (props) => <thead className="bg-gray-600" {...props} />,
+                    thead: (props) => <thead className="bg-muted" {...props} />,
                     th: (props) => (
-                      <th className="border border-gray-500 px-2 py-1 text-left text-gray-200 font-semibold" {...props} />
+                      <th className="border border-border px-2 py-1 text-left text-foreground font-semibold" {...props} />
                     ),
                     td: (props) => (
-                      <td className="border border-gray-500 px-2 py-1 text-gray-300 align-top" {...props} />
+                      <td className="border border-border px-2 py-1 text-foreground align-top" {...props} />
                     ),
-                    strong: (props) => <strong className="text-white font-semibold" {...props} />,
+                    strong: (props) => <strong className="text-foreground font-semibold" {...props} />,
                     ul: (props) => <ul className="list-disc list-inside space-y-0.5 my-1" {...props} />,
                     ol: (props) => <ol className="list-decimal list-inside space-y-0.5 my-1" {...props} />,
-                    li: (props) => <li className="text-gray-300" {...props} />,
-                    p: (props) => <p className="my-1 text-gray-200" {...props} />,
+                    li: (props) => <li className="text-foreground" {...props} />,
+                    p: (props) => <p className="my-1 text-foreground" {...props} />,
                     code: ({ inline, ...props }) =>
                       inline ? (
-                        <code className="bg-gray-600 text-blue-300 px-1 rounded text-xs" {...props} />
+                        <code className="bg-muted text-primary px-1 rounded text-xs font-mono" {...props} />
                       ) : (
-                        <code className="block bg-gray-900 text-green-300 p-2 rounded text-xs overflow-x-auto my-1" {...props} />
+                        <code className="block bg-muted text-foreground p-2 rounded-lg text-xs font-mono overflow-x-auto my-1" {...props} />
                       ),
                   }}
                 >
@@ -125,9 +125,9 @@ export default function ChatBox() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="flex gap-2 p-3 border-t border-gray-700">
+      <div className="flex gap-2 p-3 border-t border-border">
         <input
-          className="flex-1 bg-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none"
+          className="flex-1 bg-card border border-border text-foreground text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground"
           placeholder="针对发言提问..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -136,7 +136,7 @@ export default function ChatBox() {
         <button
           onClick={sendMessage}
           disabled={isChatLoading || !input.trim()}
-          className="bg-blue-500 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-40 transition-colors"
+          className="bg-primary text-primary-foreground text-sm px-4 py-2 rounded-lg hover:bg-primary/90 disabled:opacity-40 transition-colors cursor-pointer"
         >
           发送
         </button>
