@@ -62,14 +62,16 @@ export default function Sidebar({ onLoginClick }) {
 
   return (
     <aside className="w-60 bg-sidebar h-screen flex flex-col border-r border-sidebar-border">
-      <div className="p-4 border-b border-border">
-        <h1 className="text-sidebar-foreground text-lg font-bold tracking-tight">XDigest</h1>
+      <div className="px-4 py-3.5 border-b border-sidebar-border">
+        <h1 className="text-sidebar-foreground text-[11px] font-bold tracking-wider font-mono uppercase select-none">
+          XDigest
+        </h1>
       </div>
 
       <div className="p-3 border-b border-border space-y-2">
         <div className="flex gap-1.5">
           <input
-            className="flex-1 bg-card border border-border text-foreground text-sm rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground"
+            className="flex-1 bg-card border border-border text-foreground text-xs rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground font-mono"
             placeholder="添加用户名"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -77,40 +79,36 @@ export default function Sidebar({ onLoginClick }) {
           />
           <button
             onClick={addUser}
-            className="bg-primary text-primary-foreground text-sm px-3 py-1.5 rounded-lg hover:bg-primary/90 cursor-pointer transition-colors"
+            className="bg-primary text-primary-foreground text-xs px-3 py-1.5 rounded hover:bg-primary/90 cursor-pointer transition-colors font-mono"
           >
             +
           </button>
         </div>
-        {error && <p className="text-destructive text-xs">{error}</p>}
+        {error && <p className="text-destructive text-xs font-mono">{error}</p>}
       </div>
 
-      <ul className="flex-1 overflow-y-auto p-2 space-y-1">
+      <ul className="flex-1 overflow-y-auto py-2 px-1.5 space-y-0.5">
         {users.map((user) => {
           const isSelected = selectedUser?.username === user.username
           return (
             <li
               key={user.username}
-              className={`px-3 py-2 rounded-lg cursor-pointer group ${
+              className={`px-2.5 py-2 rounded cursor-pointer group border-l-2 transition-all ${
                 isSelected
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-foreground hover:bg-muted'
+                  ? 'border-primary bg-primary/10 text-foreground'
+                  : 'border-transparent text-foreground hover:bg-muted hover:border-border'
               }`}
             >
               <div className="flex items-center justify-between">
                 <span
                   onClick={() => selectUser(user)}
-                  className="flex-1 text-sm truncate"
+                  className="flex-1 text-xs truncate font-mono"
                 >
                   @{user.username}
                 </span>
                 <button
                   onClick={(e) => startEdit(user, e)}
-                  className={`opacity-0 group-hover:opacity-100 text-xs ml-1 cursor-pointer transition-opacity ${
-                    isSelected
-                      ? 'text-primary-foreground/60 hover:text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                  className="opacity-0 group-hover:opacity-100 text-xs ml-1 cursor-pointer transition-opacity text-muted-foreground hover:text-foreground"
                   title="编辑备注"
                 >
                   ✎
@@ -122,9 +120,7 @@ export default function Sidebar({ onLoginClick }) {
                   }}
                   className={`text-xs ml-1 transition-colors cursor-pointer ${
                     (user.digest ?? true)
-                      ? isSelected
-                        ? 'text-primary-foreground/80 hover:text-primary-foreground'
-                        : 'text-primary hover:text-primary/70'
+                      ? 'text-secondary hover:text-secondary/70'
                       : 'opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground'
                   }`}
                   title={(user.digest ?? true) ? '已订阅早报，点击取消' : '未订阅早报，点击开启'}
@@ -133,19 +129,13 @@ export default function Sidebar({ onLoginClick }) {
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); deleteUser(user.username) }}
-                  className={`opacity-0 group-hover:opacity-100 text-xs ml-1 cursor-pointer transition-opacity ${
-                    isSelected
-                      ? 'text-primary-foreground/60 hover:text-primary-foreground'
-                      : 'text-muted-foreground hover:text-destructive'
-                  }`}
+                  className="opacity-0 group-hover:opacity-100 text-xs ml-1 cursor-pointer transition-opacity text-muted-foreground hover:text-destructive"
                 >
                   ✕
                 </button>
               </div>
               {user.note && editingUser !== user.username && (
-                <p className={`text-xs truncate mt-0.5 ${
-                  isSelected ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                }`}>
+                <p className="text-xs truncate mt-0.5 text-muted-foreground font-mono opacity-70">
                   {user.note}
                 </p>
               )}
@@ -160,7 +150,7 @@ export default function Sidebar({ onLoginClick }) {
                       if (e.key === 'Escape') setEditingUser(null)
                     }}
                     onBlur={() => saveNote(user.username)}
-                    className="flex-1 bg-background border border-border text-foreground text-xs rounded-md px-2 py-0.5 focus:outline-none min-w-0 placeholder:text-muted-foreground"
+                    className="flex-1 bg-background border border-border text-foreground text-xs rounded px-2 py-0.5 focus:outline-none min-w-0 placeholder:text-muted-foreground font-mono"
                     placeholder="添加备注..."
                   />
                   <button
@@ -176,19 +166,21 @@ export default function Sidebar({ onLoginClick }) {
           )
         })}
         {users.length === 0 && (
-          <p className="text-muted-foreground text-xs text-center pt-4">暂无追踪用户</p>
+          <p className="text-muted-foreground text-xs text-center pt-6 font-mono opacity-50">
+            暂无追踪用户
+          </p>
         )}
       </ul>
 
       <div className="p-3 border-t border-border">
         <button
           onClick={onLoginClick}
-          className="w-full text-xs py-1 flex items-center justify-center gap-1 cursor-pointer"
+          className="w-full text-xs py-1.5 flex items-center justify-center gap-1.5 cursor-pointer font-mono rounded hover:bg-muted transition-colors"
         >
           {loggedIn ? (
-            <span className="text-secondary hover:text-secondary/70 transition-colors">✓ 已登录 X</span>
+            <span className="text-secondary">● 已登录 X</span>
           ) : (
-            <span className="text-muted-foreground hover:text-foreground transition-colors">⚙ X 账号登录</span>
+            <span className="text-muted-foreground hover:text-foreground transition-colors">○ X 账号登录</span>
           )}
         </button>
       </div>
