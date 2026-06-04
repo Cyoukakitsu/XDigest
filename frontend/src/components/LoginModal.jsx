@@ -32,7 +32,7 @@ export default function LoginModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-card border border-border rounded-xl p-6 w-80 space-y-4">
+      <div className="bg-card border border-border rounded p-6 w-80 space-y-4" style={{ boxShadow: 'var(--shadow-lg)' }}>
         <h2 className="text-foreground text-lg font-semibold">登录 X 账号</h2>
         <p className="text-muted-foreground text-xs">凭证仅保存在本地 cookies.json，不会上传。</p>
         <input
