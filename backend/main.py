@@ -17,6 +17,7 @@ import scraper
 import ai
 import emailer
 import logging
+import market_data as market_data_mod
 
 
 @asynccontextmanager
@@ -178,6 +179,9 @@ async def run_daily_digest() -> None:
         logging.warning("Daily digest skipped: not logged in to X")
         return
 
+    market_info = await market_data_mod.fetch_market_data()
+    market_summary = await ai.summarize_market(market_info) if market_info else None
+
     sections = []
     for user in users:
         try:
@@ -192,4 +196,4 @@ async def run_daily_digest() -> None:
             logging.error("Digest: failed to fetch %s: %s", user["username"], e)
 
     if sections:
-        emailer.send_digest(sections)
+        emailer.send_digest(sections, market_summary=market_summary)
