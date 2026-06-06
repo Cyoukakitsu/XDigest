@@ -102,8 +102,11 @@ def _format_market_data(data: dict) -> str:
     tech = data["tech_stocks"]
 
     def to_float(pct: str) -> float:
+        clean = pct.strip().strip("%+").replace(",", "")
+        if not clean or clean.upper() == "N/A":
+            return 0.0
         try:
-            return float(pct.strip("%+").replace(",", ""))
+            return float(clean)
         except ValueError:
             return 0.0
 
