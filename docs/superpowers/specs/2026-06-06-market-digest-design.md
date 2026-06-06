@@ -73,7 +73,7 @@ async def fetch_market_data() -> dict | None
 
 失败时返回 `None`，不抛异常（调用方跳过市场块继续发邮件）。
 
-依赖库：`httpx`（已在 venv 中）、`beautifulsoup4`（需确认或新增）。
+依赖库：`httpx`（已在 venv 中）、`re`/`json`（stdlib）。feargreedmeter.com 数据通过 `__NEXT_DATA__` JSON 提取，无需 beautifulsoup4。
 
 Alpha Vantage API key 从 `.env` 读取：`AlphaVantage_API_Key`。
 
@@ -121,12 +121,12 @@ emailer.send_digest(sections, market_summary=market_summary)
 
 | 端点 | 调用次数 |
 |------|---------|
-| SECTOR | 1 |
-| GLOBAL_QUOTE（10 支股票） | 10 |
-| **合计** | **11 / 25** |
+| GLOBAL_QUOTE（11 支板块 ETF） | 11 |
+| GLOBAL_QUOTE（10 支科技股） | 10 |
+| **合计** | **21 / 25** |
 
 ## 依赖确认
 
 - `httpx` — 已有 ✅
-- `beautifulsoup4` — 未在 requirements.txt，**需新增**
-- 解析器使用 Python 内置 `html.parser`，无需额外安装 lxml
+- `re` / `json` / `asyncio` — Python 标准库 ✅
+- 无需新增任何第三方依赖
