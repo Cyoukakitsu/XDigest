@@ -5,8 +5,6 @@ import re
 import smtplib
 import os
 from email.message import EmailMessage
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from datetime import date
 
 import markdown as md_lib
@@ -70,7 +68,7 @@ def send_digest(
     try:
         with smtp_class("smtp.gmail.com", 465) as server:
             server.login(gmail_user, app_password)
-            server.sendmail(gmail_user, to_addr, msg.as_bytes().decode("utf-8"))
+            server.sendmail(gmail_user, to_addr, msg.as_bytes())
         logger.info("Daily digest sent to %s", to_addr)
     except Exception as e:
         logger.error("Failed to send daily digest: %s", e)

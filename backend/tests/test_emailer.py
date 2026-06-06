@@ -124,5 +124,5 @@ def test_send_digest_passes_market_summary_to_build_html(monkeypatch):
 
     args = mock_server.sendmail.call_args[0]
     raw_email = args[2]
-    assert "大盘快报" in raw_email
-    assert "大盘摘要内容" in raw_email
+    assert "大盘快报".encode("utf-8") in raw_email
+    assert "大盘摘要内容".encode("utf-8") in raw_email
