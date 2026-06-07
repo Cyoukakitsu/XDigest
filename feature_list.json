@@ -1,0 +1,36 @@
+{
+  "features": [
+    {
+      "id": "feat-001",
+      "name": "推文追踪与 AI 摘要",
+      "description": "从 X 账号列表抓取过去 24 小时推文，用 AI 生成结构化中文摘要，支持后续聊天",
+      "dependencies": [],
+      "status": "done",
+      "evidence": "pytest tests/test_users.py tests/test_ai.py — 全部通过"
+    },
+    {
+      "id": "feat-002",
+      "name": "每日邮件推送",
+      "description": "每天 8:30 通过 Gmail 发送各账号摘要邮件，macOS launchd 定时触发 digest_job.py",
+      "dependencies": ["feat-001"],
+      "status": "done",
+      "evidence": "pytest tests/test_emailer.py tests/test_digest.py — 全部通过；launchd plist 已配置"
+    },
+    {
+      "id": "feat-003",
+      "name": "大盘快报板块",
+      "description": "邮件顶部新增市场情绪板块：Fear & Greed 指数 + 板块 ETF 涨跌 + 科技股表现，AI 生成 2-3 句中文摘要",
+      "dependencies": ["feat-002"],
+      "status": "done",
+      "evidence": "pytest (38/38 通过)；Alpha Vantage API 实测成功；PR #9 已开"
+    },
+    {
+      "id": "feat-004",
+      "name": "待定：下一个功能",
+      "description": "替换为你下一个想做的功能，例如：周报模式、多时间段摘要、Telegram 推送、关键词过滤…",
+      "dependencies": ["feat-003"],
+      "status": "not-started",
+      "evidence": ""
+    }
+  ]
+}

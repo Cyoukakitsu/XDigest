@@ -94,3 +94,35 @@ def test_send_digest_logs_on_smtp_error(monkeypatch, caplog):
         emailer.send_digest(sections, smtp_class=mock_smtp_cls)
 
     assert any("connection refused" in r.message for r in caplog.records)
+
+
+def test_build_html_with_market_summary_shows_block():
+    sections = [{"username": "alice", "summary": "内容", "tweet_count": 3}]
+    html = emailer.build_html(sections, market_summary="今日市场情绪偏恐惧，科技板块承压。")
+    assert "大盘快报" in html
+    assert "今日市场情绪偏恐惧" in html
+
+
+def test_build_html_without_market_summary_has_no_block():
+    sections = [{"username": "alice", "summary": "内容", "tweet_count": 3}]
+    html = emailer.build_html(sections)
+    assert "大盘快报" not in html
+
+
+def test_send_digest_passes_market_summary_to_build_html(monkeypatch):
+    monkeypatch.setenv("GMAIL_USER", "sender@gmail.com")
+    monkeypatch.setenv("GMAIL_APP_PASSWORD", "app-pass")
+    monkeypatch.setenv("DIGEST_TO", "receiver@gmail.com")
+
+    mock_server = MagicMock()
+    mock_smtp_cls = MagicMock()
+    mock_smtp_cls.return_value.__enter__ = MagicMock(return_value=mock_server)
+    mock_smtp_cls.return_value.__exit__ = MagicMock(return_value=False)
+
+    sections = [{"username": "alice", "summary": "内容", "tweet_count": 2}]
+    emailer.send_digest(sections, smtp_class=mock_smtp_cls, market_summary="大盘摘要内容")
+
+    args = mock_server.sendmail.call_args[0]
+    raw_email = args[2]
+    assert "大盘快报".encode("utf-8") in raw_email
+    assert "大盘摘要内容".encode("utf-8") in raw_email

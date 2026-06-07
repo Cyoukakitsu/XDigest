@@ -23,20 +23,30 @@ def digest_env(tmp_path, monkeypatch):
 
     mock_ai = MagicMock()
     mock_ai.summarize = AsyncMock(return_value="AI总结内容")
+    mock_ai.summarize_market = AsyncMock(return_value="今日市场情绪偏恐惧。")
 
     mock_emailer = MagicMock()
     mock_emailer.send_digest = MagicMock()
 
-    saved = {k: sys.modules.get(k) for k in ("scraper", "ai", "emailer", "main")}
+    mock_market_data = MagicMock()
+    mock_market_data.fetch_market_data = AsyncMock(return_value={
+        "fear_greed": {"score": 42, "rating": "Fear",
+                       "previous_close": 54, "one_week_ago": 59, "one_month_ago": 67},
+        "sectors": {"科技": "-6.66%"},
+        "tech_stocks": {"NVDA": "-6.20%"},
+    })
+
+    saved = {k: sys.modules.get(k) for k in ("scraper", "ai", "emailer", "main", "market_data")}
     sys.modules["scraper"] = mock_scraper
     sys.modules["ai"] = mock_ai
     sys.modules["emailer"] = mock_emailer
+    sys.modules["market_data"] = mock_market_data
     sys.modules.pop("main", None)
 
     import main
     monkeypatch.setattr(main, "USERS_PATH", users_path)
 
-    yield main, users_path, mock_scraper, mock_ai, mock_emailer
+    yield main, users_path, mock_scraper, mock_ai, mock_emailer, mock_market_data
 
     for key, val in saved.items():
         if val is None:
@@ -47,7 +57,7 @@ def digest_env(tmp_path, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_run_daily_digest_fetches_and_sends(digest_env):
-    main, users_path, mock_scraper, mock_ai, mock_emailer = digest_env
+    main, users_path, mock_scraper, mock_ai, mock_emailer, mock_market_data = digest_env
     users_path.write_text(json.dumps([
         {"username": "alice", "note": "", "digest": True}
     ]))
@@ -65,7 +75,7 @@ async def test_run_daily_digest_fetches_and_sends(digest_env):
 
 @pytest.mark.asyncio
 async def test_run_daily_digest_skips_digest_false_users(digest_env):
-    main, users_path, mock_scraper, mock_ai, mock_emailer = digest_env
+    main, users_path, mock_scraper, mock_ai, mock_emailer, mock_market_data = digest_env
     users_path.write_text(json.dumps([
         {"username": "bob", "note": "", "digest": False}
     ]))
@@ -78,7 +88,7 @@ async def test_run_daily_digest_skips_digest_false_users(digest_env):
 
 @pytest.mark.asyncio
 async def test_run_daily_digest_no_tweets_skips_ai(digest_env):
-    main, users_path, mock_scraper, mock_ai, mock_emailer = digest_env
+    main, users_path, mock_scraper, mock_ai, mock_emailer, mock_market_data = digest_env
     mock_scraper.fetch_tweets = AsyncMock(return_value=[])
     users_path.write_text(json.dumps([
         {"username": "quiet", "note": "", "digest": True}
@@ -95,7 +105,7 @@ async def test_run_daily_digest_no_tweets_skips_ai(digest_env):
 
 @pytest.mark.asyncio
 async def test_run_daily_digest_skips_if_not_logged_in(digest_env, tmp_path):
-    main, users_path, mock_scraper, mock_ai, mock_emailer = digest_env
+    main, users_path, mock_scraper, mock_ai, mock_emailer, mock_market_data = digest_env
     mock_scraper.COOKIES_PATH = tmp_path / "no_cookies.json"
     users_path.write_text(json.dumps([
         {"username": "alice", "note": "", "digest": True}
@@ -109,7 +119,7 @@ async def test_run_daily_digest_skips_if_not_logged_in(digest_env, tmp_path):
 
 @pytest.mark.asyncio
 async def test_run_daily_digest_continues_after_fetch_error(digest_env):
-    main, users_path, mock_scraper, mock_ai, mock_emailer = digest_env
+    main, users_path, mock_scraper, mock_ai, mock_emailer, mock_market_data = digest_env
     mock_scraper.fetch_tweets = AsyncMock(side_effect=[
         Exception("rate limited"),
         [{"id": "2", "text": "ok", "created_at": "Mon Jan 01 00:00:00 +0000 2024", "is_retweet": False}],
@@ -127,3 +137,33 @@ async def test_run_daily_digest_continues_after_fetch_error(digest_env):
     usernames = [s["username"] for s in sections]
     assert "bob" in usernames
     assert "alice" not in usernames
+
+
+@pytest.mark.asyncio
+async def test_run_daily_digest_includes_market_summary(digest_env):
+    main, users_path, mock_scraper, mock_ai, mock_emailer, mock_market_data = digest_env
+    users_path.write_text(json.dumps([
+        {"username": "alice", "note": "", "digest": True}
+    ]))
+
+    await main.run_daily_digest()
+
+    mock_market_data.fetch_market_data.assert_awaited_once()
+    mock_ai.summarize_market.assert_awaited_once()
+    call_kwargs = mock_emailer.send_digest.call_args[1]
+    assert call_kwargs.get("market_summary") == "今日市场情绪偏恐惧。"
+
+
+@pytest.mark.asyncio
+async def test_run_daily_digest_sends_without_market_on_failure(digest_env):
+    main, users_path, mock_scraper, mock_ai, mock_emailer, mock_market_data = digest_env
+    mock_market_data.fetch_market_data = AsyncMock(return_value=None)
+    users_path.write_text(json.dumps([
+        {"username": "alice", "note": "", "digest": True}
+    ]))
+
+    await main.run_daily_digest()
+
+    mock_emailer.send_digest.assert_called_once()
+    call_kwargs = mock_emailer.send_digest.call_args[1]
+    assert call_kwargs.get("market_summary") is None

@@ -94,3 +94,64 @@ async def chat_stream(
                         yield content
                 except (json.JSONDecodeError, KeyError):
                     continue
+
+
+def _format_market_data(data: dict) -> str:
+    fg = data["fear_greed"]
+    sectors = data["sectors"]
+    tech = data["tech_stocks"]
+
+    def to_float(pct: str) -> float:
+        clean = pct.strip().strip("%+").replace(",", "")
+        if not clean or clean.upper() == "N/A":
+            return 0.0
+        try:
+            return float(clean)
+        except ValueError:
+            return 0.0
+
+    sorted_sectors = sorted(sectors.items(), key=lambda x: to_float(x[1]), reverse=True)
+    sorted_tech = sorted(tech.items(), key=lambda x: to_float(x[1]), reverse=True)
+    up_count = sum(1 for _, v in sectors.items() if to_float(v) >= 0)
+    down_count = len(sectors) - up_count
+
+    lines = [
+        f"Fear & Greed 指数：{fg['score']}（{fg['rating']}）",
+        f"昨日：{fg['previous_close']}  上周：{fg['one_week_ago']}  上月：{fg['one_month_ago']}",
+        "",
+        f"今日板块：{up_count} 个上涨，{down_count} 个下跌",
+        "板块涨跌排行（从高到低）：",
+    ]
+    for name, pct in sorted_sectors:
+        lines.append(f"  {name}: {pct}")
+    lines.append("")
+    lines.append("科技股表现：")
+    for sym, pct in sorted_tech:
+        lines.append(f"  {sym}: {pct}")
+    return "\n".join(lines)
+
+
+async def summarize_market(data: dict) -> str:
+    market_text = _format_market_data(data)
+    messages = [
+        {
+            "role": "user",
+            "content": (
+                "你是专业的美股市场分析师，请根据以下今日市场数据，用2-3句简洁的中文描述当日市场状态。\n\n"
+                "重点描述：\n"
+                "1. 市场整体情绪及其较近期的变化趋势\n"
+                "2. 今日几个板块上涨、几个板块下跌，点出表现最强和最弱的板块\n"
+                "3. 科技股中表现亮眼的（涨幅突出）和出人意料的（涨跌幅与市场预期明显背离）个股\n\n"
+                "语气专业简洁，不超过3句话。\n\n"
+                f"今日数据：\n{market_text}"
+            ),
+        }
+    ]
+    async with httpx.AsyncClient(timeout=60) as client:
+        response = await client.post(
+            OPENROUTER_API_URL,
+            headers=_get_headers(),
+            json={"model": _model(), "messages": messages},
+        )
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"]

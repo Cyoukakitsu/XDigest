@@ -26,6 +26,7 @@ import twikit_patches  # noqa: F401
 import scraper
 import ai
 import emailer
+import market_data as market_data_mod
 
 USERS_PATH = Path(__file__).parent / "users.json"
 
@@ -48,6 +49,15 @@ async def main() -> None:
     if not scraper.COOKIES_PATH.exists():
         logger.error("cookies.json not found at %s — not logged in to X. Exiting.", scraper.COOKIES_PATH)
         sys.exit(1)
+
+    logger.info("Fetching market data ...")
+    market_info = await market_data_mod.fetch_market_data()
+    market_summary = None
+    if market_info:
+        market_summary = await ai.summarize_market(market_info)
+        logger.info("Market summary generated.")
+    else:
+        logger.warning("Market data unavailable, digest will have no market block.")
 
     logger.info("Starting digest for %d user(s): %s", len(users), [u["username"] for u in users])
 
@@ -72,7 +82,7 @@ async def main() -> None:
         return
 
     logger.info("Sending digest email ...")
-    emailer.send_digest(sections)
+    emailer.send_digest(sections, market_summary=market_summary)
     logger.info("Done.")
 
 
