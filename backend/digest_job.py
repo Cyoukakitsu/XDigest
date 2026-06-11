@@ -75,7 +75,7 @@ async def main() -> None:
             })
             logger.info("  @%s: %d tweets", username, len(tweets))
         except Exception as e:
-            logger.error("  @%s failed: %s", username, e)
+            logger.error("  @%s failed: %s: %s", username, type(e).__name__, e)
 
     if not sections:
         logger.warning("All users failed, no email sent.")
