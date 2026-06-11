@@ -1,3 +1,4 @@
+import asyncio
 import httpx
 import json
 import os
@@ -54,10 +55,13 @@ async def summarize(tweets: list[dict], days: int = 1) -> str:
         }
     ]
     async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.post(
-            OPENROUTER_API_URL,
-            headers=_get_headers(),
-            json={"model": _model(), "messages": messages},
+        response = await asyncio.wait_for(
+            client.post(
+                OPENROUTER_API_URL,
+                headers=_get_headers(),
+                json={"model": _model(), "messages": messages},
+            ),
+            timeout=180,
         )
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"]
@@ -148,10 +152,13 @@ async def summarize_market(data: dict) -> str:
         }
     ]
     async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.post(
-            OPENROUTER_API_URL,
-            headers=_get_headers(),
-            json={"model": _model(), "messages": messages},
+        response = await asyncio.wait_for(
+            client.post(
+                OPENROUTER_API_URL,
+                headers=_get_headers(),
+                json={"model": _model(), "messages": messages},
+            ),
+            timeout=180,
         )
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"]
