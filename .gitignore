@@ -9,3 +9,8 @@ frontend/dist/
 .DS_Store
 .claude
 .agents
+
+# env files (keep examples)
+.env
+.env.*
+!.env.example
